@@ -1,6 +1,5 @@
 #pragma once
 
-#include <MDB-V3.hpp>
 #include <SPI.h>
 #include <stdint.h>
 
@@ -36,15 +35,15 @@ struct MAX2253X {
   void init(uint16_t pin) {
     CS_PIN = pin;
     pinMode(CS_PIN, OUTPUT);
-    spec_spi.begin();
+    SPI.begin();
   };
 
   uint16_t read_register(IDs regAddress) {
-    digitalWrite(CS_PIN, LOW);                   // Select the device
-    spec_spi.transfer((regAddress << 2) | 0x00); // A[5:0], W/ = 0, BURST = 0
-    uint8_t msb = spec_spi.transfer(0x00);       // Receive MSB of data
-    uint8_t lsb = spec_spi.transfer(0x00);       // Receive LSB of data
-    digitalWrite(CS_PIN, HIGH);                  // Deselect the device
+    digitalWrite(CS_PIN, LOW);              // Select the device
+    SPI.transfer((regAddress << 2) | 0x00); // A[5:0], W/ = 0, BURST = 0
+    uint8_t msb = SPI.transfer(0x00);       // Receive MSB of data
+    uint8_t lsb = SPI.transfer(0x00);       // Receive LSB of data
+    digitalWrite(CS_PIN, HIGH);             // Deselect the device
     return uint16_t((msb << 8) | lsb);
   };
 
