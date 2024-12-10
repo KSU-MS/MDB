@@ -15,10 +15,10 @@ void setup() {
   delay(3000);
 
   Serial.print("Temp A Init");
-  a_temp.init(A_CS);
+  a_temp.init(B_CS);
 
-  Serial.print("\tTemp B Init\n");
-  b_temp.init(B_CS);
+  // Serial.print("\tTemp B Init\n");
+  // b_temp.init(B_CS);
 
   Serial.println("Begining print test");
 
@@ -30,13 +30,21 @@ void loop() {
   if (can_20hz.hasPassed(1500)) {
     can_20hz.restart();
 
-    Serial.print("ADC1: ");
+    Serial.print("A_ADC 1: ");
     Serial.print(a_temp.read_register(MAX2253X::ADC1));
-    Serial.print("\tADC2: ");
+    Serial.print("\tA_ADC 2: ");
     Serial.print(a_temp.read_register(MAX2253X::ADC2));
-    Serial.print("\tADC3: ");
+    Serial.print("\tA_ADC 3: ");
     Serial.print(a_temp.read_register(MAX2253X::ADC3));
-    Serial.print("\tADC4: ");
+    Serial.print("\tA_ADC 4: ");
     Serial.println(a_temp.read_register(MAX2253X::ADC4));
+    // Serial.print("B_ADC 1: ");
+    // Serial.print(b_temp.read_register(MAX2253X::ADC1));
+    // Serial.print("\tB_ADC 2: ");
+    // Serial.print(b_temp.read_register(MAX2253X::ADC2));
+    // Serial.print("\tB_ADC 3: ");
+    // Serial.print(b_temp.read_register(MAX2253X::ADC3));
+    // Serial.print("\tB_ADC 4: ");
+    // Serial.println(b_temp.read_register(MAX2253X::ADC4));
   }
 }
