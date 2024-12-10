@@ -7,17 +7,17 @@ uint16_t MAX2253X::read_register(uint8_t regAddress) {
 
   // Read/ Write bit set to 0 and burst bit set to 0.(b'18 is 0 and b'17 is 0)
   if (!crc_enable) {
-    CS_LOW;
+    digitalWrite(CS_PIN, LOW);
     SPI.transfer(frame);
     result = SPI.transfer16(0);
-    CS_HIGH;
+    digitalWrite(CS_PIN, HIGH);
   } else {
     uint8_t crc = crc_compute_2(frame << 16);
-    CS_LOW;
+    digitalWrite(CS_PIN, LOW);
     SPI.transfer(frame);
     result = SPI.transfer16(0);
     crc_read = SPI.transfer(crc);
-    CS_HIGH;
+    digitalWrite(CS_PIN, HIGH);
     crc = crc_compute_2((frame << 16) + (result));
     if (crc != crc_read) {
       printf("CRC Read from MAX22530 is incorrect");
@@ -31,7 +31,7 @@ uint16_t MAX2253X::read_register(uint8_t regAddress) {
 // Writes to any register.
 // regAddress - The address of the register to read.
 // regvalue - The register value to write to the register.
-uint16_t MAX2253X::write_register(uint8_t regAddress, uint16_t regValue) {
+void MAX2253X::write_register(uint8_t regAddress, uint16_t regValue) {
   // Register_address address = COUTH1, data = 8B32h or 35634d
   uint32_t data_frame1 = 0x0000;
   uint8_t crc_code = 0;
@@ -47,13 +47,13 @@ uint16_t MAX2253X::write_register(uint8_t regAddress, uint16_t regValue) {
     crc_code = crc_compute_2((data_frame1 << 16) + (regValue << 0));
   }
 
-  CS_LOW;
+  digitalWrite(CS_PIN, LOW);
   SPI.transfer(data_frame1);
   SPI.transfer16(regValue);
   if (crc_enable) {
     SPI.transfer(crc_code);
   }
-  CS_HIGH;
+  digitalWrite(CS_PIN, HIGH);
 }
 
 // Function to perform burst read on ADC1 or FADC1 registers only.
@@ -72,16 +72,16 @@ void MAX2253X::Burst_read_register(uint8_t regAddress) {
     if (!crc_enable) // Read/ Write bit set to 0 and burst bit set to 1. 18th
                      // bit=0 and 17th bit= 1
     {
-      CS_LOW;
+      digitalWrite(CS_PIN, LOW);
       SPI.transfer(frame);
       Burst_reg1 = SPI.transfer16(0);
       Burst_reg2 = SPI.transfer16(0);
       Burst_reg3 = SPI.transfer16(0);
       Burst_reg4 = SPI.transfer16(0);
       Burst_INT_status = SPI.transfer16(0);
-      CS_HIGH;
+      digitalWrite(CS_PIN, HIGH);
     } else if (crc_enable) {
-      CS_LOW;
+      digitalWrite(CS_PIN, LOW);
       SPI.transfer(frame);
       result[0] = SPI.transfer16(0);
       result[1] = SPI.transfer16(0);
@@ -89,13 +89,12 @@ void MAX2253X::Burst_read_register(uint8_t regAddress) {
       result[3] = SPI.transfer16(0);
       result[4] = SPI.transfer16(0);
       crc_read = SPI.transfer(0);
-      CS_HIGH;
+      digitalWrite(CS_PIN, HIGH);
       crc = crc_compute_burst(((frame << 16) + (result[0] << 0)),
                               ((result[1] << 16) + (result[2] << 0)),
                               ((result[3] << 16) + (result[4] << 0)));
       if (crc != crc_read) {
         printf("CRC Read from MAX22530 is incorrect\n");
-        return (0x10000);
       } else {
         printf("CRC Matched \n");
       }
@@ -106,7 +105,6 @@ void MAX2253X::Burst_read_register(uint8_t regAddress) {
       Burst_INT_status = result[4];
     }
   } else {
-    return 0;
   }
 }
 
@@ -148,7 +146,6 @@ void MAX2253X::softReset(void) { write_register(CONTROL, 2); }
 void MAX2253X::Register_bit_toggle(uint8_t regAddress, uint8_t bit_position) {
   if (regAddress == 0x14 && bit_position == 0) {
     printf("Use hardware Reset function");
-    return (0);
   } else {
     int n = bit_position;
     uint16_t current_data = read_register(regAddress);
