@@ -1,6 +1,6 @@
 #include "main.hpp"
-#include "CAN_Handle.hpp"
-#include "ksu_device_status.h"
+#include "Arduino.h"
+#include "git.hpp"
 
 // Set target module
 uint16_t id_a = MODULE_1_A;
@@ -10,14 +10,14 @@ uint16_t id_b = MODULE_1_B;
 Chrono can_20hz;
 Chrono can_10s;
 
-device_status_t board_status_t;
-
 MAX2253X a_temp;
 MAX2253X b_temp;
 
 // These hold the data for the CAN messages
 uint8_t buf_a[8];
 uint8_t buf_b[8];
+
+uint16_t time_last;
 
 // Init
 void setup() {
@@ -33,17 +33,18 @@ void setup() {
   init_CAN();
 
   Serial.print("Git hash: ");
-  Serial.println(board_status_t.firmware_version);
+  Serial.println(status_message.firmware_version);
   Serial.print("Is main: ");
-  Serial.print(board_status_t.project_on_main_or_master);
+  Serial.print(status_message.project_on_main_or_master);
   Serial.print("\tIs dirty: ");
-  Serial.println(board_status_t.project_is_dirty);
+  Serial.println(status_message.project_is_dirty);
 
   Serial.println("Starting...");
-  Serial.println(sizeof(device_status_t));
+  Serial.println(sizeof(status_message));
 }
 
-// Execute
+// Evil main loop
+// TODO: Make this not evil (move guys to other funcs to make it readable)
 void loop() {
   // We don't want to nuke the bus, thus we limit how often the temps are sent
   if (can_20hz.hasPassed(50)) {
@@ -82,9 +83,31 @@ void loop() {
     send_CAN(id_a, 8, buf_a);
   }
 
+  // This guy aint that important, send him every 10 seconds
   if (can_10s.hasPassed(10000)) {
     can_10s.restart();
 
-    // send_CAN(id_b, 8, buf_b);
+    status_message.on_time_seconds = uint16_t((millis() / 1000));
+
+    // Temp and humidity datasheet, page 2 has the voltage to unit conversions
+    // https://use.365.altium.com/librarycomponentsapi/api/v1/References/10EA8973-BADC-4062-8AF9-890FE0995B5D
+    // The pro micro has a 10bit ADC, and a voltage range of 0-5v, so 5/2^10
+    // gives us the v/int, so all we have to do is multiply by 0.0048828125 to
+    // convert the analogRead function back to a voltage, then divide that by
+    // the guys unit conversion provided by the datasheet and boom, arbitrary
+    // voltage converted to arbitrary number converted back to an arbitrary
+    // voltage, and then converted to a usable unit. Simple, right?
+    // I am then going to combine the v/int with the mV/%RH just to make the
+    // code cleaner, but that is where these factors come from.
+
+    // VDD=5.0V 40.0 mV/%RH
+    set_humidity(uint8_t(analogRead(Ambient_Humid) * 0.1220703125));
+
+    // VDD=5.0V 22.9 mV/°C
+    set_temp(uint8_t(analogRead(Ambient_Temp) * 0.213223253275));
+
+    memcpy(buf_b, status_message.b, 8);
+
+    send_CAN(id_b, 8, buf_b);
   }
 }

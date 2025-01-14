@@ -1,7 +1,9 @@
 #pragma once
 
-#include "main.hpp"
 #include <mcp_can.h>
+
+#include "CAN_Defs.hpp"
+#include "Pin_Defs.hpp"
 
 // Start the MCP with CS pin with whatever is defined in MDB-V3.hpp
 MCP_CAN CAN(CAN_CS);

@@ -5,5 +5,5 @@
 #include "CAN_Defs.hpp"
 #include "CAN_Handle.hpp"
 #include "MAX2253X.hpp"
-#include "MDB-V3.hpp"
-#include "ksu_device_status.h"
+#include "Pin_Defs.hpp"
+#include "git.hpp"
