@@ -6,6 +6,10 @@
 uint16_t id_a = MODULE_1_A;
 uint16_t id_b = MODULE_1_B;
 
+// This just sets whether or not the positive end of the board is facing the
+// front of the car or the rear so that the temp data is relative to the car
+#define FORWARD
+
 // Define gizmos
 Chrono can_20hz;
 Chrono can_10s;
@@ -50,15 +54,29 @@ void loop() {
   if (can_20hz.hasPassed(50)) {
     can_20hz.restart();
 
+#ifdef FORWARD
+    buf_a[0] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
+    buf_a[1] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
+    buf_a[2] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
+    buf_a[3] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
+
+    buf_a[4] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
+    buf_a[5] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
+    buf_a[6] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
+    buf_a[7] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
+#endif
+
+#ifndef FORWARD
     buf_a[0] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
     buf_a[1] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
     buf_a[2] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
     buf_a[3] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
 
-    buf_a[4] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
-    buf_a[5] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
-    buf_a[6] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
-    buf_a[7] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
+    buf_a[4] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
+    buf_a[5] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
+    buf_a[6] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
+    buf_a[7] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
+#endif
 
 #ifdef DEBUG
     Serial.print("A_ADC 1: ");
