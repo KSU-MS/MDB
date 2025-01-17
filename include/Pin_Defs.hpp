@@ -1,9 +1,7 @@
 #pragma once
 
 /*
-
   This is for the MDB-V3 board that is going to run on the KS8 modules
-
 */
 
 //

@@ -1,14 +1,4 @@
 #include "main.hpp"
-#include "Arduino.h"
-#include "git.hpp"
-
-// Set target module
-uint16_t id_a = MODULE_1_A;
-uint16_t id_b = MODULE_1_B;
-
-// This just sets whether or not the positive end of the board is facing the
-// front of the car or the rear so that the temp data is relative to the car
-#define FORWARD
 
 // Define gizmos
 Chrono can_20hz;
@@ -19,7 +9,6 @@ MAX2253X b_temp;
 
 // These hold the data for the CAN messages
 uint8_t buf_a[8];
-uint8_t buf_b[8];
 
 uint16_t time_last;
 
@@ -34,24 +23,20 @@ void setup() {
   b_temp.init(B_CS);
 
   Serial.println("CAN init");
-  init_CAN();
-
-  Serial.print("Git hash: ");
-  Serial.println(status_message.firmware_version);
-  Serial.print("Is main: ");
-  Serial.print(status_message.project_on_main_or_master);
-  Serial.print("\tIs dirty: ");
-  Serial.println(status_message.project_is_dirty);
+  CAN.begin(CAN_BPS_500K);
 
   Serial.println("Starting...");
-  Serial.println(sizeof(status_message));
+
+#ifdef DEBUG
+  Serial.println("DEBUG tools enabled");
+#endif
 }
 
 // Evil main loop
 // TODO: Make this not evil (move guys to other funcs to make it readable)
 void loop() {
   // We don't want to nuke the bus, thus we limit how often the temps are sent
-  if (can_20hz.hasPassed(50)) {
+  if (can_20hz.hasPassed(50000)) {
     can_20hz.restart();
 
 #ifdef FORWARD
@@ -98,14 +83,16 @@ void loop() {
     Serial.println(buf_a[7] * .01);
 #endif
 
-    send_CAN(id_a, 8, buf_a);
+    CAN.write(id_a, CAN_STANDARD_FRAME, 8, id_a);
   }
 
   // This guy aint that important, send him every 10 seconds
-  if (can_10s.hasPassed(10000)) {
+  if (can_10s.hasPassed(5000)) {
+    Serial.println("Entering status print");
+
     can_10s.restart();
 
-    status_message.on_time_seconds = uint16_t((millis() / 1000));
+    set_time();
 
     // Temp and humidity datasheet, page 2 has the voltage to unit conversions
     // https://use.365.altium.com/librarycomponentsapi/api/v1/References/10EA8973-BADC-4062-8AF9-890FE0995B5D
@@ -124,8 +111,6 @@ void loop() {
     // VDD=5.0V 22.9 mV/°C
     set_temp(uint8_t(analogRead(Ambient_Temp) * 0.213223253275));
 
-    memcpy(buf_b, status_message.b, 8);
-
-    send_CAN(id_b, 8, buf_b);
+    CAN.write(id_b, CAN_STANDARD_FRAME, 8, board_status);
   }
 }
