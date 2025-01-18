@@ -8,7 +8,7 @@ MAX2253X a_temp;
 MAX2253X b_temp;
 
 // These hold the data for the CAN messages
-uint8_t buf_a[8];
+uint8_t buf_voltage[8];
 
 uint16_t time_last;
 
@@ -36,62 +36,60 @@ void setup() {
 // TODO: Make this not evil (move guys to other funcs to make it readable)
 void loop() {
   // We don't want to nuke the bus, thus we limit how often the temps are sent
-  if (can_20hz.hasPassed(50000)) {
+  if (can_20hz.hasPassed(5000)) {
     can_20hz.restart();
 
 #ifdef FORWARD
-    buf_a[0] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
-    buf_a[1] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
-    buf_a[2] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
-    buf_a[3] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
+    buf_voltage[0] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
+    buf_voltage[1] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
+    buf_voltage[2] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
+    buf_voltage[3] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
 
-    buf_a[4] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
-    buf_a[5] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
-    buf_a[6] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
-    buf_a[7] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
+    buf_voltage[4] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
+    buf_voltage[5] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
+    buf_voltage[6] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
+    buf_voltage[7] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
 #endif
 
 #ifndef FORWARD
-    buf_a[0] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
-    buf_a[1] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
-    buf_a[2] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
-    buf_a[3] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
+    buf_voltage[0] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC1) * 100);
+    buf_voltage[1] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC2) * 100);
+    buf_voltage[2] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC3) * 100);
+    buf_voltage[3] = uint8_t(a_temp.Convert_to_Voltage(a_temp.ADC4) * 100);
 
-    buf_a[4] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
-    buf_a[5] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
-    buf_a[6] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
-    buf_a[7] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
+    buf_voltage[4] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC4) * 100);
+    buf_voltage[5] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC3) * 100);
+    buf_voltage[6] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC2) * 100);
+    buf_voltage[7] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
 #endif
 
 #ifdef DEBUG
-    Serial.print("A_ADC 1: ");
-    Serial.print(buf_a[0] * .01);
-    Serial.print("\tA_ADC 2: ");
-    Serial.print(buf_a[1] * .01);
-    Serial.print("\tA_ADC 3: ");
-    Serial.print(buf_a[2] * .01);
-    Serial.print("\tA_ADC 4: ");
-    Serial.println(buf_a[3] * .01);
-
-    Serial.print("B_ADC 1: ");
-    Serial.print(buf_a[4] * .01);
-    Serial.print("\tB_ADC 2: ");
-    Serial.print(buf_a[5] * .01);
-    Serial.print("\tB_ADC 3: ");
-    Serial.print(buf_a[6] * .01);
-    Serial.print("\tB_ADC 4: ");
-    Serial.println(buf_a[7] * .01);
+    Serial.print("ADC 1: ");
+    Serial.print(buf_voltage[0] * .01);
+    Serial.print("\tADC 2: ");
+    Serial.print(buf_voltage[1] * .01);
+    Serial.print("\tADC 3: ");
+    Serial.print(buf_voltage[2] * .01);
+    Serial.print("\tADC 4: ");
+    Serial.print(buf_voltage[3] * .01);
+    Serial.print("\tADC 5: ");
+    Serial.print(buf_voltage[4] * .01);
+    Serial.print("\tADC 6: ");
+    Serial.print(buf_voltage[5] * .01);
+    Serial.print("\tADC 7: ");
+    Serial.print(buf_voltage[6] * .01);
+    Serial.print("\tADC 8: ");
+    Serial.println(buf_voltage[7] * .01);
 #endif
 
-    CAN.write(id_a, CAN_STANDARD_FRAME, 8, id_a);
+    CAN.write(id_a, CAN_STANDARD_FRAME, 8, buf_voltage);
   }
 
   // This guy aint that important, send him every 10 seconds
   if (can_10s.hasPassed(5000)) {
-    Serial.println("Entering status print");
-
     can_10s.restart();
 
+    // Update our time part of the message
     set_time();
 
     // Temp and humidity datasheet, page 2 has the voltage to unit conversions
@@ -105,11 +103,13 @@ void loop() {
     // I am then going to combine the v/int with the mV/%RH just to make the
     // code cleaner, but that is where these factors come from.
 
-    // VDD=5.0V 40.0 mV/%RH
-    set_humidity(uint8_t(analogRead(Ambient_Humid) * 0.1220703125));
-
     // VDD=5.0V 22.9 mV/°C
-    set_temp(uint8_t(analogRead(Ambient_Temp) * 0.213223253275));
+    uint8_t value = uint8_t(analogRead(Ambient_Temp) * 0.213223253275);
+    set_temp(value);
+
+    // VDD=5.0V 40.0 mV/%RH
+    uint8_t value2 = uint8_t(analogRead(Ambient_Humid) * 0.1220703125);
+    set_humidity(value2);
 
     CAN.write(id_b, CAN_STANDARD_FRAME, 8, board_status);
   }
