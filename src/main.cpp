@@ -1,7 +1,7 @@
 #include "main.hpp"
 
 // Define gizmos
-Chrono can_20hz;
+Chrono can_5hz;
 Chrono can_10s;
 
 MAX2253X a_temp;
@@ -36,8 +36,8 @@ void setup() {
 // TODO: Make this not evil (move guys to other funcs to make it readable)
 void loop() {
   // We don't want to nuke the bus, thus we limit how often the temps are sent
-  if (can_20hz.hasPassed(5000)) {
-    can_20hz.restart();
+  if (can_5hz.hasPassed(200)) {
+    can_5hz.restart();
 
 #ifdef FORWARD
     buf_voltage[0] = uint8_t(b_temp.Convert_to_Voltage(b_temp.ADC1) * 100);
@@ -86,7 +86,7 @@ void loop() {
   }
 
   // This guy aint that important, send him every 10 seconds
-  if (can_10s.hasPassed(5000)) {
+  if (can_10s.hasPassed(10000)) {
     can_10s.restart();
 
     // Update our time part of the message
@@ -94,22 +94,20 @@ void loop() {
 
     // Temp and humidity datasheet, page 2 has the voltage to unit conversions
     // https://use.365.altium.com/librarycomponentsapi/api/v1/References/10EA8973-BADC-4062-8AF9-890FE0995B5D
-    // The pro micro has a 10bit ADC, and a voltage range of 0-5v, so 5/2^10
-    // gives us the v/int, so all we have to do is multiply by 0.0048828125 to
-    // convert the analogRead function back to a voltage, then divide that by
-    // the guys unit conversion provided by the datasheet and boom, arbitrary
-    // voltage converted to arbitrary number converted back to an arbitrary
-    // voltage, and then converted to a usable unit. Simple, right?
-    // I am then going to combine the v/int with the mV/%RH just to make the
-    // code cleaner, but that is where these factors come from.
+    // VDD=5.0V 22.9 mV/°C, The pro micro does 10bit reads, but value shouldn't
+    // read above 100 so cast to uint8_t and ball. So get our shit into volts
+    // 2^10 - 1 = 1023 -> 5.0/1023 = 0.00488758553275
+    // Get our volts into degrees
+    // 1/(22.9 * 10^-3) = 43.6681222707
+    // Multiply the two and now we have a factor for uint16 -> degrees
 
     // VDD=5.0V 22.9 mV/°C
-    uint8_t value = uint8_t(analogRead(Ambient_Temp) * 0.213223253275);
-    set_temp(value);
+    uint8_t temp = uint8_t(analogRead(Ambient_Temp) * 0.213431682653);
+    set_temp(temp);
 
     // VDD=5.0V 40.0 mV/%RH
-    uint8_t value2 = uint8_t(analogRead(Ambient_Humid) * 0.1220703125);
-    set_humidity(value2);
+    uint8_t humidity = uint8_t(analogRead(Ambient_Humid) * 0.122189638319);
+    set_humidity(humidity);
 
     CAN.write(id_b, CAN_STANDARD_FRAME, 8, board_status);
   }
