@@ -4,7 +4,8 @@
 #include <Chrono.h>
 #include <SPI.h>
 
-#include "CAN_Defs.hpp"
+#include <KSUCAN.hpp>
+
 #include "CAN_MCP2515.hpp"
 #include "MAX2253X.hpp"
 #include "Pin_Defs.hpp"
@@ -16,5 +17,5 @@
 #define DEBUG
 
 // Set target module
-uint16_t id_a = MODULE_1_A;
-uint16_t id_b = MODULE_1_B;
+uint16_t id_a = ID_MODULE_1_A;
+uint16_t id_b = ID_MODULE_1_B;
